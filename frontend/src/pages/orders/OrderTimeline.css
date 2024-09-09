@@ -1,0 +1,121 @@
+.order-timeline {
+  display: flex;
+  flex-direction: column;
+  margin: 20px 0;
+  padding: 0 20px;
+}
+
+.timeline-step {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.timeline-marker-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 20px;
+}
+
+.timeline-marker {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #4caf50;
+  z-index: 2;
+}
+
+.timeline-marker.current {
+  border: 2px solid #4caf50;
+  background-color: white;
+}
+
+.timeline-marker.created {
+  background-color: #000000;
+}
+
+.timeline-marker.failed {
+  background-color: #ff0000;
+}
+
+.timeline-marker.cancelled {
+  background-color: #ffa500;
+}
+
+.timeline-marker.delivered {
+  background-color: #007bff;
+}
+
+.timeline-marker.current.created {
+  border-color: #000000;
+}
+
+.timeline-marker.current.cancelled {
+  border-color: #ffa500;
+}
+
+.timeline-marker.current.delivered {
+  border-color: #007bff;
+}
+
+.timeline-connector {
+  width: 2px;
+  height: 30px;
+  background-color: #4caf50;
+  margin: 5px 0;
+}
+
+.timeline-connector.created {
+  background-color: #000000;
+}
+
+.timeline-connector.failed {
+  background-color: #ff0000;
+}
+
+.timeline-connector.cancelled {
+  background-color: #ffa500;
+}
+
+.timeline-connector.delivered {
+  background-color: #007bff;
+}
+
+.timeline-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.timeline-label.created {
+  color: #000000;
+}
+
+.timeline-label.failed {
+  color: #ff0000;
+}
+
+.timeline-label.cancelled {
+  color: #ffa500;
+}
+
+.timeline-label.delivered {
+  color: #007bff;
+}
+
+.timeline-label.payment-completed {
+  color: #4caf50;
+}
+
+.timeline-date {
+  font-size: 0.8em;
+  color: #666;
+}
+
+.timeline-step:last-child .timeline-connector {
+  display: none;
+}

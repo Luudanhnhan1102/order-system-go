@@ -1,0 +1,43 @@
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.App {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-wrapper {
+  display: flex;
+  flex: 1;
+  padding-top: 60px; /* Height of the header */
+}
+
+main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+main.with-sidebar {
+  margin-left: 250px; /* Increased to prevent sidebar overlap */
+  padding: 20px;
+}
+
+/* Styles for the login page */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f2f5;
+}
+
+@media (max-width: 768px) {
+  main.with-sidebar {
+    margin-left: 0;
+  }
+}

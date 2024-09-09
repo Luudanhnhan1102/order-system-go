@@ -1,0 +1,88 @@
+.orders-container {
+  margin-left: 15px; /* Reduced margin to bring content closer to sidebar */
+  max-width: 800px; /* Limit the maximum width of the content */
+}
+
+.orders-header {
+  margin-bottom: 20px;
+  margin-left: 5px; /* Reduced left margin to align with list items */
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.order-item p {
+  margin: 5px 0;
+}
+
+.order-item p:first-child {
+  font-weight: bold;
+}
+
+.order-details {
+  flex: 1;
+}
+
+.order-timeline {
+  flex: 0 0 200px;
+  margin-left: 20px;
+}
+
+.order-actions {
+  margin-top: 10px;
+}
+
+.order-actions button {
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.order-actions button:hover {
+  background-color: #45a049;
+}
+
+.order-actions button:first-child {
+  background-color: #f44336;
+}
+
+.order-actions button:first-child:hover {
+  background-color: #d32f2f;
+}
+
+@media (max-width: 1024px) {
+  .orders-container {
+    margin-left: 210px; /* Slightly reduced margin for medium-sized screens */
+  }
+}
+
+@media (max-width: 768px) {
+  .orders-container {
+    margin-left: 5px; /* Further reduce margin for smaller screens */
+    padding-left: 5px; /* Keep reduced padding for smaller screens */
+  }
+}
