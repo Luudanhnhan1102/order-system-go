@@ -1,3 +1,5 @@
+import { API_ORDER_URL } from './config';
+
 interface Product {
   id: string;
   name: string;
@@ -6,7 +8,7 @@ interface Product {
 }
 
 export const fetchProducts = async (): Promise<Product[]> => {
-  const response = await fetch('http://localhost:8080/products');
+  const response = await fetch(`${API_ORDER_URL}/products`);
   if (!response.ok) {
     throw new Error('Failed to fetch products');
   }

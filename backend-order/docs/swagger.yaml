@@ -147,7 +147,6 @@ definitions:
       isAdmin:
         type: boolean
     type: object
-host: localhost:8080
 info:
   contact: {}
   description: This is a simple backend server using Go and Gin framework.

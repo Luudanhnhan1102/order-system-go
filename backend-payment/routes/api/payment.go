@@ -1,20 +1,21 @@
 package api
 
 import (
-	"context"
-	"log"
-	"net/http"
-	"time"
-
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"log"
+	"math/rand/v2"
+	"net/http"
+	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"backend-payment/database"
+	"backend-payment/helpers"
 	"backend-payment/models"
 )
 
@@ -107,7 +108,25 @@ func notifyOrderService(transaction models.Transaction) error {
 		return fmt.Errorf("failed to marshal payload: %w", err)
 	}
 
-	resp, err := http.Post("http://localhost:8080/backend/payment-update", "application/json", bytes.NewBuffer(jsonPayload))
+	orderServiceURL := os.Getenv("API_ORDER_URL")
+	if orderServiceURL == "" {
+		return fmt.Errorf("API_ORDER_URL environment variable is not set")
+	}
+
+	req, err := http.NewRequest("POST", orderServiceURL+"/backend/payment-update", bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	// Sign the request
+	timestamp := time.Now()
+	signature := helpers.SignRequest(req.Method, req.URL.Path, jsonPayload, timestamp)
+	req.Header.Set(helpers.SignatureHeader, signature)
+	req.Header.Set(helpers.TimestampHeader, timestamp.Format(time.RFC3339))
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to send request to order service: %w", err)
 	}

@@ -1,5 +1,4 @@
-const API_ORDER_URL = 'http://localhost:8080';
-const API_PAYMENT_URL = 'http://localhost:8081';
+import { API_ORDER_URL, API_PAYMENT_URL } from './config';
 
 export interface OrderProduct {
   id: string;

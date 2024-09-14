@@ -25,7 +25,6 @@ definitions:
       updated_at:
         type: string
     type: object
-host: localhost:8081
 info:
   contact: {}
   description: This is a payment service API.

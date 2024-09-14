@@ -1,3 +1,5 @@
+import { API_ORDER_URL } from './config';
+
 interface LoginResponse {
   token: string;
 }
@@ -8,7 +10,7 @@ interface LoginRequest {
 }
 
 export const loginUser = async (credentials: LoginRequest): Promise<string> => {
-  const response = await fetch('http://localhost:8080/auth/login', {
+  const response = await fetch(`${API_ORDER_URL}/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -30,7 +32,7 @@ interface RegisterRequest {
 }
 
 export const registerUser = async (credentials: RegisterRequest): Promise<void> => {
-  const response = await fetch('http://localhost:8080/auth/register', {
+  const response = await fetch(`${API_ORDER_URL}/auth/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -44,7 +46,7 @@ export const registerUser = async (credentials: RegisterRequest): Promise<void> 
 };
 
 export const forgotPassword = async (email: string): Promise<void> => {
-  const response = await fetch('http://localhost:8080/auth/forgot-password', {
+  const response = await fetch(`${API_ORDER_URL}/auth/forgot-password`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -58,7 +60,7 @@ export const forgotPassword = async (email: string): Promise<void> => {
 };
 
 export const resetPassword = async (email: string, resetToken: string, newPassword: string): Promise<void> => {
-  const response = await fetch('http://localhost:8080/auth/reset-password', {
+  const response = await fetch(`${API_ORDER_URL}/auth/reset-password`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

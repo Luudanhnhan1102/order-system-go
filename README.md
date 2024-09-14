@@ -1,6 +1,6 @@
 # Go Assignment Project
 
-This project implements a set of microservices and a frontend application for an e-commerce system.
+This project implements a microservices-based e-commerce system with a React frontend.
 
 ## Components
 
@@ -19,13 +19,29 @@ This project implements a set of microservices and a frontend application for an
 - React-based web application
 - Provides user interface for interacting with the backend services
 
-## How to Run the Project
+## Project Structure
+
+- `backend-order/`: Order service implementation
+- `backend-payment/`: Payment service implementation
+- `frontend/`: React-based frontend application
+- `infra/`: Terraform configuration for AWS infrastructure
+
+## Technologies Used
+
+- Backend: Go, Gin framework, MongoDB
+- Frontend: React, TypeScript
+- Infrastructure: AWS (ECS, ECR, ALB, DocumentDB, S3, CloudFront)
+- API Documentation: Swagger
+- IaC: Terraform
+
+## How to Run the Project Locally
 
 ### Backend Services
 
 1. Order Service:
    ```
    cd backend-order
+   cp .env.example .env
    go run main.go
    ```
    The service will run on `http://localhost:8080`
@@ -33,6 +49,7 @@ This project implements a set of microservices and a frontend application for an
 2. Payment Service:
    ```
    cd backend-payment
+   cp .env.example .env
    go run main.go
    ```
    The service will run on `http://localhost:8081`
@@ -42,6 +59,7 @@ This project implements a set of microservices and a frontend application for an
 1. Install dependencies:
    ```
    cd frontend
+   cp .env.local .env
    npm install
    ```
 
@@ -56,15 +74,69 @@ This project implements a set of microservices and a frontend application for an
 - Order Service Swagger UI: `http://localhost:8080/swagger/index.html`
 - Payment Service Swagger UI: `http://localhost:8081/swagger/index.html`
 
-## Project Structure
+## ProductionDeployment
 
-- `backend-order/`: Order service implementation
-- `backend-payment/`: Payment service implementation
-- `frontend/`: React-based frontend application
+The project is deployed on AWS using Terraform. The infrastructure includes:
 
-## Technologies Used
+- ECS Fargate for running backend services
+- ECR for Docker image storage
+- Application Load Balancers for backend services
+- DocumentDB for database
+- S3 and CloudFront for frontend hosting
 
-- Backend: Go, Gin framework, PostgreSQL
-- Frontend: React, TypeScript
-- API Documentation: Swagger
+To deploy the infrastructure:
 
+1. Navigate to the `infra` directory
+2. Initialize Terraform:
+   ```
+   terraform init
+   ```
+3. Apply the Terraform configuration:
+   ```
+   terraform apply
+   ```
+
+### Deploy Backend Services
+
+1. Navigate to the `backend-order` directory
+2. Run the deployment script
+   ```
+   cd backend-order
+   ./deploy.sh
+   ```
+
+### Deploy Frontend
+
+1. Navigate to the `frontend` directory
+2. Run the deployment script
+   ```
+   cd frontend
+   npm run deploy:prod
+   ```
+
+## Environment Variables
+
+Both backend services use environment variables for configuration. Ensure these are set in your local `.env` files and in the AWS ECS task definitions.
+
+Key variables include:
+- `MONGODB_URI`
+- `MONGODB_DATABASE`
+- `PORT`
+- `API_URL`
+- `API_PAYMENT_URL` (for Order Service)
+- `API_ORDER_URL` (for Payment Service)
+- `MAILTRAP_API_TOKEN` (for Order Service)
+
+## Service Discovery
+
+The backend services use AWS Cloud Map for service discovery, allowing them to communicate using internal DNS names within the VPC.
+
+## Security
+
+- HTTPS is enforced for all public endpoints
+- MongoDB connections use TLS
+- IAM roles are used for ECS task execution
+
+## Monitoring and Logging
+
+CloudWatch is used for monitoring and logging of ECS tasks and other AWS resources.

@@ -2,22 +2,25 @@ package main
 
 import (
 	"log"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
-	_ "backend-payment/docs" // This is where Swag will generate its docs.go file
+	docs "backend-payment/docs"
+	"backend-payment/middleware"
 	"backend-payment/routes"
 )
 
 // @title Payment API
 // @version 1.0
 // @description This is a payment service API.
-// @host localhost:8081
 // @BasePath /
+
 func main() {
 	// Load .env file
 	err := godotenv.Load()
@@ -28,8 +31,30 @@ func main() {
 	// Create a new Gin router
 	r := gin.Default()
 
+	r.Use(middleware.LoggerMiddleware())
+
 	// Setup routes
 	routes.SetupRoutes(r)
+
+	// Get API_URL from environment and parse the host
+	apiURL := os.Getenv("API_URL")
+	if apiURL == "" {
+		apiURL = "http://localhost:8081" // Default value if not set
+	}
+
+	parsedURL, err := url.Parse(apiURL)
+	if err != nil {
+		log.Printf("Error parsing API_URL: %v. Using default.", err)
+		docs.SwaggerInfo.Host = "localhost:8081"
+	} else {
+		// Remove port if it's the default port for the scheme
+		host := parsedURL.Host
+		if (parsedURL.Scheme == "http" && strings.HasSuffix(host, ":80")) ||
+			(parsedURL.Scheme == "https" && strings.HasSuffix(host, ":443")) {
+			host = strings.Split(host, ":")[0]
+		}
+		docs.SwaggerInfo.Host = host
+	}
 
 	// Add Swagger documentation route
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 )
 
-const (
-	mailtrapAPIURL = "https://send.api.mailtrap.io/api/send"
-	apiToken       = "2c0514badc6d435a9e09bb4b2584a048"
-)
+const mailtrapAPIURL = "https://send.api.mailtrap.io/api/send"
+
+var apiToken = os.Getenv("MAILTRAP_API_TOKEN")
 
 type EmailData struct {
 	To      []EmailAddress `json:"to"`
@@ -24,13 +24,18 @@ type EmailAddress struct {
 }
 
 func SendEmail(emailData EmailData) error {
+	if apiToken == "" {
+		fmt.Println("Mailtrap API token not defined. Skipping email send.")
+		return nil
+	}
+
 	payload := struct {
 		From    EmailAddress   `json:"from"`
 		To      []EmailAddress `json:"to"`
 		Subject string         `json:"subject"`
 		Text    string         `json:"text"`
 	}{
-		From:    EmailAddress{Email: "mailtrap@demomailtrap.com", Name: "Go Assignment Project"},
+		From:    EmailAddress{Email: "mailtrap@demomailtrap.com", Name: "Cursor Experiment Project"},
 		To:      emailData.To,
 		Subject: emailData.Subject,
 		Text:    emailData.Text,

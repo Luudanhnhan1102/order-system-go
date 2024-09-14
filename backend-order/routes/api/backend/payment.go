@@ -1,7 +1,9 @@
 package backend
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -11,6 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"backend-order/database"
+	"backend-order/helpers"
 	"backend-order/models"
 )
 
@@ -39,6 +42,18 @@ type PaymentUpdateRequest struct {
 // @Failure 500 {object} map[string]string
 // @Router /backend/payment-update [post]
 func handlePaymentUpdate(c *gin.Context) {
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
+		return
+	}
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
+
+	if !helpers.VerifySignature(c.Request, body) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid signature"})
+		return
+	}
+
 	var req PaymentUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

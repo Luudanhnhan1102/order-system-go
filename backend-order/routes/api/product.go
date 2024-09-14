@@ -8,6 +8,7 @@ import (
 	"backend-order/models"
 
 	"github.com/gin-gonic/gin"
+	"github.com/qiniu/qmgo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -31,8 +32,18 @@ func getProductsHandler(c *gin.Context) {
 	db := database.GetDB()
 	err := db.Collection("products").Find(ctx, bson.M{}).All(&products)
 	if err != nil {
+		// If the error is due to no documents found, return an empty array
+		if err == qmgo.ErrNoSuchDocuments {
+			c.JSON(http.StatusOK, []models.Product{})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching products"})
 		return
+	}
+
+	// If products is nil, return an empty array instead
+	if products == nil {
+		products = []models.Product{}
 	}
 
 	c.JSON(http.StatusOK, products)
