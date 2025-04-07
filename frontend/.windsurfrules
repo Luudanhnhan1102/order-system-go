@@ -1,0 +1,16 @@
+language: typescript
+framework: react
+rules:
+  - "Use TypeScript for type safety"
+  - "Implement component-based architecture"
+  - "Use React hooks for state management"
+  - "Separate UI components from business logic"
+  - "Create reusable components"
+  - "Implement responsive design"
+  - "Use proper error handling and loading states"
+  - "Keep mock data separate from source code"
+  - "Follow accessibility best practices"
+  - "Optimize for performance"
+  - "Use environment variables for configuration"
+  - "Write unit tests for components and logic"
+  - "Use pnpm for package management"

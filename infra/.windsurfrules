@@ -1,0 +1,15 @@
+language: hcl
+framework: terraform
+cloud: aws
+rules:
+  - "Use Terraform modules for reusable infrastructure"
+  - "Follow infrastructure as code best practices"
+  - "Implement proper security measures"
+  - "Use variables for configuration"
+  - "Document all resources and their purpose"
+  - "Implement proper state management"
+  - "Use remote state storage"
+  - "Implement proper IAM roles and policies"
+  - "Follow the principle of least privilege"
+  - "Implement proper monitoring and logging"
+  - "Use tagging for resource organization"

@@ -1,0 +1,15 @@
+language: go
+framework: gin
+database: mongodb
+rules:
+  - "Implement secure payment processing with proper validation"
+  - "Follow Go best practices and idiomatic Go code"
+  - "Use proper error handling with meaningful error messages"
+  - "Implement clean architecture with separate layers (controllers, services, repositories)"
+  - "Document all public APIs with Swagger annotations"
+  - "Write unit tests for all business logic"
+  - "Use environment variables for configuration"
+  - "Follow RESTful API design principles"
+  - "Implement proper logging and monitoring"
+  - "Keep dependencies updated and secure"
+  - "Use Go modules for dependency management"
