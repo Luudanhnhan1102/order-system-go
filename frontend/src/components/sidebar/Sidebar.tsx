@@ -9,13 +9,13 @@ const Sidebar: React.FC = () => {
       <ul>
         <li>
           <NavLink to="/products" className={({ isActive }) => isActive ? "active" : ""}>
-            <FaBox className="sidebar-icon" />
+            {/* <FaBox className="sidebar-icon" /> */}
             Products
           </NavLink>
         </li>
         <li>
           <NavLink to="/orders" className={({ isActive }) => isActive ? "active" : ""}>
-            <FaShoppingCart className="sidebar-icon" />
+            {/* <FaShoppingCart className="sidebar-icon" /> */}
             Orders
           </NavLink>
         </li>
