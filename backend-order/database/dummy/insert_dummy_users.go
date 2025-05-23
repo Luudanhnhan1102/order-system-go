@@ -10,10 +10,17 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	// Get MongoDB client
+	errDB := godotenv.Load()
+	if errDB != nil {
+		log.Println("Error loading .env file, using environment variables")
+	}
+
 	client := database.GetClient()
 	defer client.Close(context.Background())
 

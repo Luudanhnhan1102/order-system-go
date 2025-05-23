@@ -112,8 +112,16 @@ func registerUserHandler(c *gin.Context) {
 
 	// Check if user already exists
 	db := database.GetDB()
+
+
+
 	var existingUser models.User
 	err := db.Collection("users").Find(c, primitive.M{"email": req.Email}).One(&existingUser)
+
+		// log the user email
+		fmt.Println("User email:", req.Email)
+		fmt.Println("User password:", req.Password)
+		fmt.Println("User existingUser:", existingUser)
 	if err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "User with this email already exists"})
 		return

@@ -76,13 +76,11 @@ func main() {
 }
 
 func runBackgroundJob() {
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			jobs.DeliverConfirmedOrders()
-		}
+	// concurrency in go
+	for range ticker.C {
+		jobs.DeliverConfirmedOrders()
 	}
 }

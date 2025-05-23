@@ -7,10 +7,16 @@ import (
 	"backend-order/database"
 	"backend-order/models"
 
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func main() {
+	errDB := godotenv.Load()
+	if errDB != nil {
+		log.Println("Error loading .env file, using environment variables")
+	}
+	
 	ctx := context.Background()
 	db := database.GetDB()
 	collection := db.Collection("products")
