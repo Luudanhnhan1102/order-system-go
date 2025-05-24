@@ -18,10 +18,10 @@ func DeliverConfirmedOrders() {
 
 	now := time.Now()
 
-	// Find orders that are in "Confirmed" status and older than 60 seconds
+	// Find orders that are in "Confirmed" status and older than 3 seconds
 	filter := bson.M{
 		"status":     models.OrderStatusConfirmed,
-		"updated_at": bson.M{"$lt": now.Add(-60 * time.Second)},
+		"updated_at": bson.M{"$lt": now.Add(-3 * time.Second)},
 	}
 
 	update := bson.M{
