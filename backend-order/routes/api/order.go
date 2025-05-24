@@ -23,8 +23,9 @@ func SetupOrderRoutes(r *gin.Engine) {
 	orderGroup.Use(middleware.AuthMiddleware())
 	{
 		orderGroup.GET("", getOrdersHandler)
+		orderGroup.GET("/:id", getOrderHandler)
 		orderGroup.POST("", createOrderHandler)
-		orderGroup.POST("/:id/cancel", cancelOrderHandler) // Add this line
+		orderGroup.POST("/:id/cancel", cancelOrderHandler)
 	}
 }
 
@@ -183,6 +184,87 @@ func createOrderHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Order created successfully", "order": newOrder})
+}
+
+// @Summary Cancel an order
+// @Description Cancel an existing order (requires authentication)
+// @Tags Orders
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param id path string true "Order ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Summary Get order by ID
+// @Description Get a specific order by ID (requires authentication)
+// @Tags Orders
+// @Security ApiKeyAuth
+// @Produce json
+// @Param id path string true "Order ID"
+// @Success 200 {object} models.Order
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /orders/{id} [get]
+func getOrderHandler(c *gin.Context) {
+	// Get order ID from URL
+	orderID := c.Param("id")
+
+	// Validate order ID
+	objID, err := primitive.ObjectIDFromHex(orderID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid order ID"})
+		return
+	}
+
+	// Get user from context
+	userInterface, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Type assert the user object
+	user, ok := userInterface.(models.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user data in context"})
+		return
+	}
+
+	// Get database connection
+	db := database.GetDB()
+
+	// For debugging
+	fmt.Printf("Looking for order with ID: %s for user ID: %s\n", orderID, user.ID.Hex())
+
+	// First, try to find the order by ID only
+	var order models.Order
+	err = db.Collection("orders").Find(c, bson.M{"_id": objID}).One(&order)
+
+	if err != nil {
+		if errors.Is(err, qmgo.ErrNoSuchDocuments) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Order not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch order: " + err.Error()})
+		return
+	}
+
+	// Debug info
+	fmt.Printf("Order CustomerID: %s, Current UserID: %s\n", order.CustomerID, user.ID.Hex())
+
+	// Check if the user is the owner of the order or an admin
+	if order.CustomerID != user.ID.Hex() && !user.IsAdmin {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Not authorized to view this order"})
+		return
+	}
+
+	c.JSON(http.StatusOK, order)
 }
 
 // @Summary Cancel an order

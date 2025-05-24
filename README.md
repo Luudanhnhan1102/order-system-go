@@ -42,6 +42,8 @@ This project implements a microservices-based e-commerce system with a React fro
    ```
    cd backend-order
    cp .env.example .env
+   go run database/dummy/insert_dummy_users.go
+   go run database/dummy/insert_dummy_products.go
    go run main.go
    ```
    The service will run on `http://localhost:8080`
@@ -74,7 +76,7 @@ This project implements a microservices-based e-commerce system with a React fro
 - Order Service Swagger UI: `http://localhost:8080/swagger/index.html`
 - Payment Service Swagger UI: `http://localhost:8081/swagger/index.html`
 
-## ProductionDeployment
+## Production Deployment
 
 The project is deployed on AWS using Terraform. The infrastructure includes:
 

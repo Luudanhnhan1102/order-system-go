@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/qiniu/qmgo"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"backend-payment/database"
@@ -28,8 +29,9 @@ func SetupPaymentRoutes(r *gin.Engine) {
 }
 
 type CreatePaymentRequest struct {
-	OrderID string  `json:"order_id" binding:"required"`
-	Amount  float64 `json:"amount" binding:"required,gt=0"`
+	OrderID       string  `json:"order_id" binding:"required"`
+	Amount        float64 `json:"amount" binding:"required,gt=0"`
+	IdempotencyKey string `json:"idempotency_key" binding:"required"`
 }
 
 // @Summary Create a new payment
@@ -43,55 +45,92 @@ type CreatePaymentRequest struct {
 // @Failure 500 {object} map[string]string
 // @Router /payments [post]
 func createPaymentHandler(c *gin.Context) {
-	fmt.Println("createPaymentHandler called")
+	log.Println("createPaymentHandler: Payment request received")
+	
 	var req CreatePaymentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Printf("createPaymentHandler: Invalid request payload: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
 		return
 	}
 
-	transaction := models.Transaction{
-		ID:        primitive.NewObjectID(),
-		OrderID:   req.OrderID,
-		Amount:    req.Amount,
-		Status:    models.TransactionStatusPending,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
+	log.Printf("createPaymentHandler: Processing payment for order %s, amount: %.2f", req.OrderID, req.Amount)
 
 	db := database.GetDB()
 	collection := db.Collection("transactions")
 
-	_, err := collection.InsertOne(context.Background(), transaction)
+	// Check for duplicate request using order_id
+	existingTxn := models.Transaction{}
+	err := collection.Find(context.Background(), qmgo.M{"order_id": req.OrderID}).One(&existingTxn)
+
+	if err == nil {
+		log.Printf("createPaymentHandler: Duplicate request detected for order %s, returning existing transaction", req.OrderID)
+		c.JSON(http.StatusOK, existingTxn)
+		return
+	} else if err != qmgo.ErrNoSuchDocuments {
+		log.Printf("createPaymentHandler: Error checking for existing transaction: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check for existing transaction"})
+		return
+	}
+
+	// Create new transaction
+	transaction := models.Transaction{
+		ID:             primitive.NewObjectID(),
+		OrderID:        req.OrderID,
+		Amount:         req.Amount,
+		Status:         models.TransactionStatusPending,
+		IdempotencyKey: req.IdempotencyKey,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// Insert the new transaction
+	_, err = collection.InsertOne(context.Background(), &transaction)
 	if err != nil {
+		log.Printf("createPaymentHandler: Failed to create transaction: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create transaction"})
 		return
 	}
 
-	// Mock payment gateway integration
+	// Simulate payment processing
+	log.Println("createPaymentHandler: Processing payment...")
+	time.Sleep(1 * time.Second) // Simulate processing time
+
+	// Mock payment gateway response (80% success, 20% failure)
 	if rand.Float32() < 0.8 {
-		// 80% chance of success
 		transaction.Status = models.TransactionStatusCompleted
+		log.Printf("createPaymentHandler: Payment for order %s completed successfully", req.OrderID)
 	} else {
-		// 20% chance of failure
 		transaction.Status = models.TransactionStatusFailed
+		log.Printf("createPaymentHandler: Payment for order %s failed", req.OrderID)
 	}
+
 	transaction.UpdatedAt = time.Now()
 
+	// Update transaction status
 	err = collection.UpdateOne(
 		context.Background(),
-		primitive.M{"_id": transaction.ID},
-		primitive.M{"$set": primitive.M{"status": transaction.Status, "updated_at": transaction.UpdatedAt}},
+		qmgo.M{"_id": transaction.ID},
+		qmgo.M{"$set": qmgo.M{
+			"status":     transaction.Status,
+			"updated_at": transaction.UpdatedAt,
+		}},
 	)
+
 	if err != nil {
+		log.Printf("createPaymentHandler: Failed to update transaction status: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update transaction status"})
 		return
 	}
 
-	// After updating the transaction status
-	if err = notifyOrderService(transaction); err != nil {
-		log.Printf("Error notifying order service: %v", err)
-	}
+	// Notify order service in the background
+	go func() {
+		if err := notifyOrderService(transaction); err != nil {
+			log.Printf("createPaymentHandler: Failed to notify order service: %v", err)
+		} else {
+			log.Printf("createPaymentHandler: Successfully notified order service for order %s", req.OrderID)
+		}
+	}()
 
 	c.JSON(http.StatusCreated, transaction)
 }

@@ -5,7 +5,11 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
+	"strings"
+	"sync"
 	"time"
 
 	"backend-order/database"
@@ -20,8 +24,29 @@ import (
 )
 
 var (
-	secretKey = []byte("your_secret_key") // TODO: Use environment variable in production
+	secretKey     []byte
+	secretKeyOnce sync.Once
 )
+
+// getSecretKey returns the JWT secret key, initializing it if necessary
+func getSecretKey() ([]byte, error) {
+	var initErr error
+	secretKeyOnce.Do(func() {
+		key := os.Getenv("JWT_SECRET_KEY")
+		if key == "" {
+			initErr = fmt.Errorf("JWT_SECRET_KEY environment variable not set")
+			return
+		}
+		// Ensure the key is at least 32 bytes for HS256
+		if len(key) < 32 {
+			key = key + strings.Repeat("0", 32-len(key))
+			key = key[:32] // Ensure it's exactly 32 bytes
+		}
+		secretKey = []byte(key)
+		log.Printf("JWT Secret Key loaded in auth handler, length: %d", len(secretKey))
+	})
+	return secretKey, initErr
+}
 
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
@@ -321,6 +346,11 @@ func authenticateUser(email, password string) (*models.User, error) {
 }
 
 func generateJWTToken(user models.User) (string, error) {
+	secretKey, err := getSecretKey()
+	if err != nil {
+		return "", fmt.Errorf("failed to get JWT secret key: %w", err)
+	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":      user.ID.Hex(),
 		"email":   user.Email,

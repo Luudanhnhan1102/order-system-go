@@ -17,7 +17,7 @@ export interface Order {
   product: OrderProduct;
   quantity: number;
   total_amount: number;
-  status: 'Created' | 'Confirmed' | 'Delivered' | 'Cancelled';
+  status: 'Created' | 'Confirmed' | 'Delivered' | 'Cancelled' | 'Processing' | 'Payment Failed';
   payment_id?: string;
   created_at: string;
   updated_at: string;
@@ -40,7 +40,7 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': token,
+      'Authorization': `Bearer ${token}`,
     },
     body: JSON.stringify(orderData),
   });
@@ -61,7 +61,7 @@ export const getOrders = async (): Promise<Order[]> => {
 
   const response = await fetch(`${API_ORDER_URL}/orders`, {
     headers: {
-      'Authorization': token,
+      'Authorization': `Bearer ${token}`,
     },
   });
 
@@ -81,7 +81,7 @@ export const cancelOrder = async (orderId: string): Promise<void> => {
   const response = await fetch(`${API_ORDER_URL}/orders/${orderId}/cancel`, {
     method: 'POST',
     headers: {
-      'Authorization': token,
+      'Authorization': `Bearer ${token}`,
     },
   });
 
@@ -90,22 +90,60 @@ export const cancelOrder = async (orderId: string): Promise<void> => {
   }
 };
 
+export const fetchOrderById = async (orderId: string): Promise<Order> => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+
+  const response = await fetch(`${API_ORDER_URL}/orders/${orderId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to fetch order');
+  }
+
+  return response.json();
+};
+
 export const initiatePayment = async (orderId: string, amount: number): Promise<void> => {
   const token = localStorage.getItem('token');
   if (!token) {
     throw new Error('No authentication token found');
   }
 
+  // Generate a unique idempotency key
+  const idempotencyKey = `order-${orderId}-${Date.now()}`;
+  
+  console.log('Initiating payment with:', { orderId, amount, idempotencyKey });
+
   const response = await fetch(`${API_PAYMENT_URL}/payments`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': token,
+      'Authorization': `Bearer ${token}`,
+      'Idempotency-Key': idempotencyKey,
     },
-    body: JSON.stringify({ order_id: orderId, amount }),
+    body: JSON.stringify({
+      order_id: orderId,
+      amount: amount,
+      idempotency_key: idempotencyKey
+    }),
   });
 
+  const responseData = await response.json().catch(() => ({}));
+  console.log('Payment response:', { status: response.status, data: responseData });
+
   if (!response.ok) {
-    throw new Error('Failed to initiate payment');
+    const errorMessage = responseData.error || 'Failed to initiate payment';
+    console.error('Payment error:', { status: response.status, error: errorMessage });
+    throw new Error(errorMessage);
   }
+
+  return responseData;
 };

@@ -2,6 +2,7 @@ language: go
 framework: gin
 database: mongodb
 rules:
+  - "You are a senior software engineer from FAANG"
   - "Follow Go best practices and idiomatic Go code"
   - "Use proper error handling with meaningful error messages"
   - "Implement clean architecture with separate layers (controllers, services, repositories)"

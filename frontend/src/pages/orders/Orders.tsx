@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getOrders, cancelOrder, initiatePayment, Order } from '../../api/Order';
+import { getOrders, cancelOrder, initiatePayment, fetchOrderById, Order } from '../../api/Order';
 import OrderTimeline from './OrderTimeline';
 import './Orders.css';
 
@@ -7,6 +7,7 @@ const Orders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [payingOrders, setPayingOrders] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetchOrders();
@@ -35,11 +36,52 @@ const Orders: React.FC = () => {
 
   const handlePayOrder = async (orderId: string, amount: number) => {
     try {
+      // Set loading state for this order
+      setPayingOrders(prev => ({ ...prev, [orderId]: true }));
+      
+      // Process payment first
       await initiatePayment(orderId, amount);
-      // Refresh the orders list after payment initiation
-      fetchOrders();
+      
+      // If successful, the server will update the order status
+      // We'll fetch the latest order data to update the UI
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for server to process
+      const updatedOrder = await fetchOrderById(orderId);
+      
+      // Update the orders list with the latest data
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId ? updatedOrder : order
+        )
+      );
+      
+      // Clear any previous errors
+      setError(null);
+      
     } catch (err) {
+      console.error('handlePayOrderError:', err);
       setError('Failed to initiate payment. Please try again later.');
+      
+      // Update order status to show payment failed
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId 
+            ? {
+                ...order,
+                status: 'Payment Failed',
+                timeline: [
+                  ...order.timeline.filter(item => item.name !== 'Processing Payment'),
+                  {
+                    name: 'Payment Failed',
+                    timestamp: new Date().toISOString()
+                  }
+                ]
+              } 
+            : order
+        )
+      );
+    } finally {
+      // Clear loading state
+      setPayingOrders(prev => ({ ...prev, [orderId]: false }));
     }
   };
 
@@ -69,8 +111,18 @@ const Orders: React.FC = () => {
                 <p>Status: {order.status}</p>
                 {order.status === 'Created' && (
                   <div className="order-actions">
-                    <button onClick={() => handleCancelOrder(order.id)}>Cancel Order</button>
-                    <button onClick={() => handlePayOrder(order.id, order.total_amount)}>Pay Now</button>
+                    <button 
+                      onClick={() => handleCancelOrder(order.id)}
+                      disabled={!!payingOrders[order.id]}
+                    >
+                      Cancel Order
+                    </button>
+                    <button 
+                      onClick={() => handlePayOrder(order.id, order.total_amount)}
+                      disabled={!!payingOrders[order.id]}
+                    >
+                      {payingOrders[order.id] ? 'Processing...' : 'Pay Now'}
+                    </button>
                   </div>
                 )}
               </div>
